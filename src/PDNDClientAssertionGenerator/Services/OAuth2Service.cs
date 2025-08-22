@@ -30,12 +30,11 @@ namespace PDNDClientAssertionGenerator.Services
             _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        /// <summary>
-        /// Asynchronously generates a client assertion (JWT) token.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation, containing the generated client assertion as a string.</returns>
-        public async Task<string> GenerateClientAssertionAsync()
+        /// <inheritdoc />
+        public async Task<string> GenerateClientAssertionAsync(CancellationToken ct = default)
         {
+            if (ct.IsCancellationRequested) return string.Empty;
+
             // Generate a unique token ID (JWT ID)
             Guid tokenId = Guid.NewGuid();
 
@@ -93,12 +92,8 @@ namespace PDNDClientAssertionGenerator.Services
             return await Task.FromResult(clientAssertion); // Return the generated token as a string.
         }
 
-        /// <summary>
-        /// Asynchronously requests an access token by sending the client assertion to the OAuth2 server.
-        /// </summary>
-        /// <param name="clientAssertion">The client assertion (JWT) used for the token request.</param>
-        /// <returns>A task that represents the asynchronous operation, containing the response with the access token as a <see cref="PDNDTokenResponse"/>.</returns>
-        public async Task<PDNDTokenResponse> RequestAccessTokenAsync(string clientAssertion)
+        /// <inheritdoc />
+        public async Task<PDNDTokenResponse> RequestAccessTokenAsync(string clientAssertion, CancellationToken ct = default)
         {
             using var httpClient = new HttpClient();
 
@@ -118,18 +113,23 @@ namespace PDNDClientAssertionGenerator.Services
             var content = new FormUrlEncodedContent(payload);
 
             // Send the POST request to the OAuth2 server and await the response.
-            HttpResponseMessage response = await httpClient.PostAsync(_config.ServerUrl, content);
+            HttpResponseMessage response = await httpClient
+                .PostAsync(_config.ServerUrl, content, ct)
+                .ConfigureAwait(false);
 
             // Ensure the response indicates success (throws an exception if not).
             response.EnsureSuccessStatusCode();
 
             // Read and parse the response body as a JSON string.
-            string jsonResponse = await response.Content.ReadAsStringAsync();
+            string jsonResponse = await response.Content
+                .ReadAsStringAsync(ct)
+                .ConfigureAwait(false);
 
             try
             {
                 // Deserialize the JSON response into the PDNDTokenResponse object.
-                return JsonSerializer.Deserialize<PDNDTokenResponse>(jsonResponse);
+                return JsonSerializer.Deserialize<PDNDTokenResponse>(jsonResponse)
+                             ?? throw new InvalidOperationException("Token response is null or invalid JSON.");
             }
             catch (JsonException ex)
             {

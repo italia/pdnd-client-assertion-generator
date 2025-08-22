@@ -23,23 +23,16 @@ namespace PDNDClientAssertionGenerator.Services
             _oauth2Service = oauth2Service ?? throw new ArgumentNullException(nameof(oauth2Service));
         }
 
-        /// <summary>
-        /// Asynchronously generates a client assertion (JWT) by delegating to the OAuth2 service.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation, containing the generated client assertion as a string.</returns>
-        public async Task<string> GetClientAssertionAsync()
+        /// <inheritdoc />
+        public async Task<string> GetClientAssertionAsync(CancellationToken ct = default)
         {
-            return await _oauth2Service.GenerateClientAssertionAsync();
+            return await _oauth2Service.GenerateClientAssertionAsync(ct);
         }
 
-        /// <summary>
-        /// Asynchronously requests an OAuth2 access token using the provided client assertion.
-        /// </summary>
-        /// <param name="clientAssertion">The client assertion (JWT) used for the token request.</param>
-        /// <returns>A task that represents the asynchronous operation, containing the response with the access token as a <see cref="PDNDTokenResponse"/>.</returns>
-        public async Task<PDNDTokenResponse> GetTokenAsync(string clientAssertion)
+        /// <inheritdoc />
+        public async Task<PDNDTokenResponse> GetTokenAsync(string clientAssertion, CancellationToken ct = default)
         {
-            return await _oauth2Service.RequestAccessTokenAsync(clientAssertion);
+            return await _oauth2Service.RequestAccessTokenAsync(clientAssertion, ct);
         }
     }
 }

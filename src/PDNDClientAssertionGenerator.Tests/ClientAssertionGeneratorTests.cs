@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Moq;
 using PDNDClientAssertionGenerator.Interfaces;
+using PDNDClientAssertionGenerator.Models;
 using PDNDClientAssertionGenerator.Services;
 
 namespace PDNDClientAssertionGenerator.Tests
@@ -13,28 +14,48 @@ namespace PDNDClientAssertionGenerator.Tests
         {
             // Arrange
             var oauth2ServiceMock = new Mock<IOAuth2Service>();
-            var clientAssertionGeneratorService = new ClientAssertionGeneratorService(oauth2ServiceMock.Object);
+            oauth2ServiceMock
+                .Setup(o => o.GenerateClientAssertionAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync("assertion");
+
+            var sut = new ClientAssertionGeneratorService(oauth2ServiceMock.Object);
 
             // Act
-            await clientAssertionGeneratorService.GetClientAssertionAsync();
+            var result = await sut.GetClientAssertionAsync();
 
             // Assert
-            oauth2ServiceMock.Verify(o => o.GenerateClientAssertionAsync(), Times.Once);
+            Assert.Equal("assertion", result);
+            oauth2ServiceMock.Verify(
+                o => o.GenerateClientAssertionAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
-        public async Task GetToken_ShouldCall_RequestAccessTokenAsync_WithClientAssertion()
+        public async Task GetTokenAsync_ShouldCall_RequestAccessTokenAsync_WithClientAssertion()
         {
             // Arrange
+            var expected = new PDNDTokenResponse
+            {
+                TokenType = "Bearer",
+                ExpiresIn = 3600,
+                AccessToken = "abc"
+            };
+
             var oauth2ServiceMock = new Mock<IOAuth2Service>();
-            var clientAssertionGeneratorService = new ClientAssertionGeneratorService(oauth2ServiceMock.Object);
-            var clientAssertion = "testClientAssertion";
+            oauth2ServiceMock
+                .Setup(o => o.RequestAccessTokenAsync("testClientAssertion", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expected);
+
+            var sut = new ClientAssertionGeneratorService(oauth2ServiceMock.Object);
 
             // Act
-            await clientAssertionGeneratorService.GetTokenAsync(clientAssertion);
+            var token = await sut.GetTokenAsync("testClientAssertion");
 
             // Assert
-            oauth2ServiceMock.Verify(o => o.RequestAccessTokenAsync(clientAssertion), Times.Once);
+            Assert.Same(expected, token);
+            oauth2ServiceMock.Verify(
+                o => o.RequestAccessTokenAsync("testClientAssertion", It.IsAny<CancellationToken>()),
+                Times.Once);
         }
     }
 }
