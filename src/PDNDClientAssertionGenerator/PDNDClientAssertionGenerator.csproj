@@ -1,9 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- Multi-targeting: build for both .NET 8 (LTS) and .NET 9 (STS) -->
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+
+    <!-- Enable modern C# conveniences and nullable reference types -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet package metadata -->
     <Description>.NET Client Assertion Generator for PDND Service API </Description>
     <PackageProjectUrl>https://github.com/italia/pdnd-client-assertion-generator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/italia/pdnd-client-assertion-generator</RepositoryUrl>
@@ -11,11 +16,16 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>.NET Client Assertion Generator for PDND Service API</Title>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-	<Version>1.0.4</Version>
-    <AssemblyVersion></AssemblyVersion>
+    <Version>1.0.4</Version>
+
+    <!-- Optional: set AssemblyVersion explicitly or remove the element -->
+    <!-- <AssemblyVersion>1.0.4.0</AssemblyVersion> -->
+
+    <!-- Package author(s) -->
     <Authors>Francesco Del Re</Authors>
   </PropertyGroup>
 
+  <!-- Package assets to include in the NuGet package root -->
   <ItemGroup>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
@@ -27,17 +37,42 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+  <!-- Dependencies for .NET 8 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <!-- Microsoft.Extensions stack aligned to .NET 8 -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+
+    <!-- IdentityModel packages (same versions across TFMs for consistency) -->
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.8" />
+
+    <!-- System.Text.Json aligned to .NET 8 -->
+    <PackageReference Include="System.Text.Json" Version="9.0.9" />
+  </ItemGroup>
+
+  <!-- Dependencies for .NET 9 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <!-- Microsoft.Extensions stack aligned to .NET 9 -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+
+    <!-- IdentityModel packages (same versions across TFMs for consistency) -->
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+
+    <!-- System.Text.Json aligned to .NET 9 -->
+    <PackageReference Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>
 
 </Project>

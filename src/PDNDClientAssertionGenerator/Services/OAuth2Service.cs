@@ -40,7 +40,7 @@ namespace PDNDClientAssertionGenerator.Services
 
             // Define the current UTC time and the token expiration time.
             DateTime issuedAt = DateTime.UtcNow;
-            DateTime expiresAt = issuedAt.AddMinutes(_config.Duration);
+            DateTime expiresAt = issuedAt.AddSeconds(_config.Duration);
 
             // Define JWT header as a dictionary of key-value pairs.
             Dictionary<string, string> headers = new()

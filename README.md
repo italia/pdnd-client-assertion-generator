@@ -8,27 +8,40 @@
 [![Language - C#](https://img.shields.io/static/v1?label=Language&message=C%23&color=blueviolet)](https://dotnet.microsoft.com/it-it/languages/csharp)
 [![stars - pdnd-client-assertion-generator](https://img.shields.io/github/stars/italia/pdnd-client-assertion-generator?style=social)](https://github.com/italia/pdnd-client-assertion-generator)
 
-.NET implementation of **OAuth2** authentication for **PDND** service with client assertion generation.
+A .NET implementation of **OAuth 2.0** client authentication for **PDND** (Piattaforma Digitale Nazionale Dati), including client assertion (JWT) generation and voucher retrieval.
 
 ## Contents
-- [PDND](#pdnd)
+- [What is PDND?](#what-is-pdnd)
 - [Voucher](#voucher)
 - [Requesting a Voucher](#requesting-a-voucher)
 - [How to Use the Client Assertion Generator](#how-to-use-the-client-assertion-generator)
-- [Licensee](#licensee)
+- [Voucher Flow for Interoperability APIs](#voucher-flow-for-interoperability-apis)
+- [Security Notes](#security-notes)
+- [License](#license)
 - [Contact](#contact)
 
-## PDND
+## What is PDND?
 The **[Piattaforma Digitale Nazionale Dati (PDND)](https://developers.italia.it/it/pdnd/)** is an Italian digital infrastructure designed to facilitate **data interoperability** and exchange between public administrations and private entities. The platform aims to simplify the sharing of public data by providing a secure, standardized, and centralized system for data integration, access, and management. PDND promotes digital transformation within the public sector by ensuring data is accessible, reliable, and reusable, enabling more efficient public services, enhancing transparency, and supporting **data-driven decision-making** for both government and citizens.
 
 ## Voucher
-Vouchers are simple JWT tokens. The implemented authentication flow is OAuth 2.0, which refers to [**RFC6750**](https://datatracker.ietf.org/doc/html/rfc6750) for the use of Bearer tokens and to [**RFC7521**](https://datatracker.ietf.org/doc/html/rfc7521) for client authorization via client assertion.
+A **voucher** is a JWT used as a Bearer token to access PDND Interoperability APIs.
+
+This library implements the OAuth 2.0 flow with:
+
+- [**RFC6750**](https://datatracker.ietf.org/doc/html/rfc6750) (Bearer tokens)
+- [**RFC7521**](https://datatracker.ietf.org/doc/html/rfc7521) (client authorization via client assertion)
+
+To request a voucher, the client must:
+1. Register at least one public key on the PDND client.
+2. Create a client assertion (JWT) and sign it with the corresponding private key.
+3. Exchange the assertion for a voucher at the authorization endpoint.
 
 ## Requesting a Voucher
 To obtain a valid voucher, you must first upload at least one public key to an interop API client. The first step is to create a valid client assertion and sign it with your private key (which must match the public key registered with the client on PDND Interoperabilità). The client assertion consists of a header and a payload.
 
 ## Voucher Flow for Interoperability APIs
-The user requests a voucher. Once obtained, they include it as an authorization header in subsequent calls to the PDND Interoperability APIs.
+1. Your system requests a voucher using a signed client assertion.
+2. On success, include the returned voucher in the Authorization: Bearer <token> header when calling PDND Interoperability APIs.
 
 ## How to Use the Client Assertion Generator
 To properly set up and use the Client Assertion Generator in your ASP.NET Core application, follow these steps:
@@ -39,14 +52,14 @@ To properly set up and use the Client Assertion Generator in your ASP.NET Core a
     "ServerUrl": "https://test-server-url.com",
     "KeyId": "ZmYxZGE2YjQtMzY2Yy00NWI5LThjNGItMDJmYmQyZGIyMmZh",
     "Algorithm": "RS256",
-    "Type": "at+jwt",
+    "Type": "JWT",
     "ClientId": "9b361d49-33f4-4f1e-a88b-4e12661f2309",
     "Issuer": "interop.pagopa.it",
     "Subject": "9b361d49-33f4-4f1e-a88b-4e12661f2309",
     "Audience": "https://erogatore.example/ente-example/v1",
     "PurposeId": "1b361d49-33f4-4f1e-a88b-4e12661f2300",
     "KeyPath": "C:/Keys/private.pem",
-    "Duration": "600"
+    "Duration": "600" // Duration is expressed in milliseconds
   },
   ```
 
@@ -81,7 +94,13 @@ If you'd like to contribute, please fork, fix, commit and send a pull request fo
  * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
  * [Open an issue](https://github.com/italia/pdnd-client-assertion-generator/issues) if you encounter a bug or have a suggestion for improvements/features
 
-## Licensee
+## Security Notes
+- Never commit private keys or secrets to the repository.
+- Prefer environment variables or secret stores for sensitive values.
+- Rotate keys regularly and restrict file permissions on KeyPath.
+- Validate token lifetimes appropriate to your risk profile.
+
+## License
 Repository source code is available under MIT License, see license in the source.
 
 ## Contact
