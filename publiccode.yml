@@ -8,20 +8,21 @@ platforms:
   - windows
 categories:
   - application-development
+  - it-development
 developmentStatus: stable
 softwareType: standalone/backend
 description:
   it-IT:
-    genericName: Generatore di Client Assertion PDND
-    shortDescription: .NET Client Assertion Generator for PDND Service API
-    longDescription: Il **PDND Client Assertion Generator** è un progetto
-      open-source sviluppato in .NET per facilitare l'autenticazione OAuth2
-      nell'ambito della **Piattaforma Digitale Nazionale Dati (PDND)**. Questo
-      strumento consente la generazione automatizzata di JWT (JSON Web Token)
-      firmati con chiavi private, indispensabili per l'accesso sicuro alle API
-      della PDND. Questa soluzione ready-to-use è altamente configurabile,
-      consentendo di adattarsi a diversi contesti applicativi e alle specifiche
-      esigenze dei progetti.
+    localisedName: Generatore di Client Assertion PDND
+    shortDescription: Utility .NET per generare client assertion JWT per l’accesso alle API PDND
+    longDescription: Il PDND Client Assertion Generator è un progetto open-source
+      sviluppato in .NET per facilitare l'autenticazione OAuth2 nell'ambito
+      della Piattaforma Digitale Nazionale Dati (PDND). Questo strumento
+      consente la generazione automatizzata di JWT (JSON Web Token) firmati con
+      chiavi private, indispensabili per l'accesso sicuro alle API della PDND.
+      Questa soluzione ready-to-use è altamente configurabile, consentendo di
+      adattarsi a diversi contesti applicativi e alle specifiche esigenze dei
+      progetti.
     features:
       - Generazione di Client Assertion
       - Creazione Voucher
@@ -35,9 +36,8 @@ maintenance:
   contacts:
     - name: Francesco Del Re
       email: francesco.delre.87@gmail.com
-      phone: ""
-      affiliation: ""
 localisation:
   localisationReady: false
   availableLanguages:
     - en
+    - it-IT
