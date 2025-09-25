@@ -22,7 +22,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+          dotnet-version: |
+            9.x
+            8.x
 
     # Restore dependencies for the main project
     - name: Restore dependencies for PDNDClientAssertionGenerator
