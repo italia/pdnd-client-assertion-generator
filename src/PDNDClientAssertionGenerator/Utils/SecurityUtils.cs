@@ -1,107 +1,129 @@
-﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
-// This code is licensed under MIT license (see LICENSE.txt for details)
+﻿// (c) 2024-2025 Francesco Del Re <francesco.delre.87@gmail.com>
+// This code is licensed under the MIT License (see LICENSE.txt for details)
 using System.Security.Cryptography;
+using System.Text;
 
 namespace PDNDClientAssertionGenerator.Utils
 {
     public static class SecurityUtils
     {
         /// <summary>
-        /// Retrieves the RSAParameters from a PEM file located at the specified key path.
+        /// Backward-compatible shim: keeps existing call sites working.
+        /// Supported PEM formats:
+        /// - PKCS#1: -----BEGIN RSA PRIVATE KEY-----
+        /// - PKCS#8: -----BEGIN PRIVATE KEY-----
+        /// - PKCS#8 (encrypted): -----BEGIN ENCRYPTED PRIVATE KEY-----
         /// </summary>
-        /// <param name="keyPath">The file path to the PEM file containing the RSA private key.</param>
-        /// <returns>An RSAParameters object containing the RSA key parameters.</returns>
-        /// <exception cref="FileNotFoundException">Thrown when the specified key file is not found.</exception>
-        /// <exception cref="FormatException">Thrown when the key format is invalid.</exception>
-        public static RSAParameters GetSecurityParameters(string keyPath)
+        public static RSA GetRsaFromKeyPath(string keyPath, ReadOnlySpan<char> password = default) =>
+            CreateRsaFromKeyFile(keyPath, password);
+
+        /// <summary>
+        /// Creates an RSA instance from a PEM key file (.pem/.key).
+        /// Supports PKCS#1, PKCS#8 (unencrypted), PKCS#8 (encrypted).
+        /// </summary>
+        /// <param name="keyPath">Path to the PEM key file.</param>
+        /// <param name="password">Password for encrypted PKCS#8 PEM (ignored otherwise).</param>
+        /// <returns>An RSA instance. The caller must dispose it.</returns>
+        /// <exception cref="ArgumentException">Path null/empty.</exception>
+        /// <exception cref="FileNotFoundException">File not found.</exception>
+        /// <exception cref="InvalidOperationException">Access issues or unsupported format.</exception>
+        /// <exception cref="FormatException">Malformed PEM/base64.</exception>
+        /// <exception cref="CryptographicException">Import errors.</exception>
+        public static RSA CreateRsaFromKeyFile(string keyPath, ReadOnlySpan<char> password = default)
         {
-            // Check if the key path is valid
             if (string.IsNullOrWhiteSpace(keyPath))
-            {
                 throw new ArgumentException("Key path cannot be null or empty.", nameof(keyPath));
-            }
 
-            // Normalize the key path by removing any trailing directory or alternative directory separators
-            string normalizedPath = keyPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-            // Check if the key file exists at the specified path
+            var normalizedPath = keyPath.Trim();
             if (!File.Exists(normalizedPath))
-            {
-                throw new FileNotFoundException($"The specified key file does not exist at the path: {keyPath}");
-            }
+                throw new FileNotFoundException($"Key file not found: {normalizedPath}");
 
-            // Read the PEM content from the specified file
-            string pemContent;
+            // Explicitly block PFX/P12
+            var ext = Path.GetExtension(normalizedPath).ToLowerInvariant();
+            if (ext is ".pfx" or ".p12")
+                throw new InvalidOperationException("Only PEM keys are supported (PKCS#1 / PKCS#8).");
+
+            // Read PEM text
+            string pem;
             try
             {
-                pemContent = File.ReadAllText(normalizedPath).Trim();
+                pem = File.ReadAllText(normalizedPath);
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                throw new FileNotFoundException("Unable to read the key file.", ex);
+                throw new InvalidOperationException("Access denied while reading the key file.", ex);
             }
-
-            // Extract the base64 key content
-            string base64Key = ExtractBase64Key(pemContent);
-            byte[] privateKeyBytes;
-
-            try
+            catch (IOException ex)
             {
-                privateKeyBytes = Convert.FromBase64String(base64Key);
-            }
-            catch (FormatException ex)
-            {
-                throw new FormatException("The key format is invalid.", ex);
+                throw new InvalidOperationException("I/O error while reading the key file.", ex);
             }
 
-            using (var rsa = RSA.Create())
+            // Encrypted PKCS#8
+            if (pem.Contains("BEGIN ENCRYPTED PRIVATE KEY", StringComparison.Ordinal))
             {
-                rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
-                return rsa.ExportParameters(true);
-            }
-        }
+                if (password.IsEmpty)
+                    throw new InvalidOperationException("A password is required for an encrypted PKCS#8 PEM key.");
 
-        /// <summary>
-        /// Extracts the base64 encoded key from the PEM formatted string.
-        /// </summary>
-        /// <param name="pemContent">The PEM formatted string.</param>
-        /// <returns>The base64 encoded key.</returns>
-        public static string ExtractBase64Key(string pemContent)
-        {
-            // Remove the header, footer, and any newlines or whitespaces
-            return pemContent
-                .Replace("-----BEGIN RSA PRIVATE KEY-----", string.Empty)
-                .Replace("-----END RSA PRIVATE KEY-----", string.Empty)
-                .Replace("\n", string.Empty)
-                .Replace("\r", string.Empty)
-                .Replace(" ", string.Empty)
-                .Trim();
-        }
-
-        /// <summary>
-        /// Retrieves and imports RSA security parameters from the specified key path.
-        /// </summary>
-        /// <param name="keyPath">The file path to the RSA private key.</param>
-        /// <returns>An instance of RSA with the imported key parameters.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if there is an error retrieving or importing the RSA parameters.</exception>
-        public static RSA GetRsaFromKeyPath(string keyPath)
-        {
-            try
-            {
-                // Retrieve RSA security parameters from the specified key path.
-                RSAParameters rsaParams = GetSecurityParameters(keyPath);
-
-                // Create a new instance of RSA and import the retrieved key parameters.
+                var der = ExtractDerBlock(pem, "ENCRYPTED PRIVATE KEY");
                 var rsa = RSA.Create();
-                rsa.ImportParameters(rsaParams);
-
-                // Return the configured RSA instance.
+                rsa.ImportEncryptedPkcs8PrivateKey(password, der, out _);
                 return rsa;
             }
-            catch (Exception ex)
+
+            // Unencrypted (PKCS#1 or PKCS#8): ImportFromPem handles both
+            var rsaPlain = RSA.Create();
+            try
             {
-                // If there is an error during the retrieval or import of the key, throw an InvalidOperationException.
-                throw new InvalidOperationException("Failed to retrieve or import RSA security parameters.", ex);
+                rsaPlain.ImportFromPem(pem);
+                return rsaPlain;
+            }
+            catch (CryptographicException)
+            {
+                // Fallback: explicit DER extraction for edge cases
+                if (pem.Contains("BEGIN PRIVATE KEY", StringComparison.Ordinal))
+                {
+                    var der = ExtractDerBlock(pem, "PRIVATE KEY"); // PKCS#8 (unencrypted)
+                    rsaPlain.ImportPkcs8PrivateKey(der, out _);
+                    return rsaPlain;
+                }
+                if (pem.Contains("BEGIN RSA PRIVATE KEY", StringComparison.Ordinal))
+                {
+                    var der = ExtractDerBlock(pem, "RSA PRIVATE KEY"); // PKCS#1
+                    rsaPlain.ImportRSAPrivateKey(der, out _);
+                    return rsaPlain;
+                }
+
+                throw new InvalidOperationException("Unsupported or malformed PEM format.");
+            }
+        }
+
+        /// <summary>
+        /// Extracts DER bytes from a specific PEM block label. Strips whitespace.
+        /// </summary>
+        private static byte[] ExtractDerBlock(string pem, string label)
+        {
+            var begin = $"-----BEGIN {label}-----";
+            var end = $"-----END {label}-----";
+
+            var start = pem.IndexOf(begin, StringComparison.Ordinal);
+            var stop = pem.IndexOf(end, StringComparison.Ordinal);
+            if (start < 0 || stop < 0 || stop <= start)
+                throw new FormatException($"PEM block '{label}' not found or malformed.");
+
+            var base64Area = pem.Substring(start + begin.Length, stop - (start + begin.Length));
+
+            var sb = new StringBuilder(base64Area.Length);
+            foreach (var ch in base64Area)
+                if (!char.IsWhiteSpace(ch))
+                    sb.Append(ch);
+
+            try 
+            { 
+                return Convert.FromBase64String(sb.ToString()); 
+            }
+            catch (FormatException ex) 
+            { 
+                throw new FormatException($"Invalid base64 content in PEM block '{label}'.", ex); 
             }
         }
     }

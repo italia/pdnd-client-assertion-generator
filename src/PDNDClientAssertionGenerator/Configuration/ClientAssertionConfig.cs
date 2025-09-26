@@ -60,6 +60,12 @@ namespace PDNDClientAssertionGenerator.Configuration
         public string KeyPath { get; set; }
 
         /// <summary>
+        /// Gets or sets the password for an encrypted PKCS#8 private key.
+        /// Leave null or empty if the key is not encrypted.
+        /// </summary>
+        public string KeyPassword { get; set; }
+
+        /// <summary>
         /// Gets or sets the duration in minutes of the token (this will be used to calculate the token expiration)
         /// </summary>
         public int Duration { get; set; }

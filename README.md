@@ -59,7 +59,8 @@ To properly set up and use the Client Assertion Generator in your ASP.NET Core a
     "Audience": "https://erogatore.example/ente-example/v1",
     "PurposeId": "1b361d49-33f4-4f1e-a88b-4e12661f2300",
     "KeyPath": "C:/Keys/private.pem",
-    "Duration": "600" // Duration is expressed in milliseconds
+    "KeyPassword": "", // Only for encrypted PKCS#8 PEM
+    "Duration": "600" // Duration is expressed in seconds
   },
   ```
 
@@ -71,6 +72,18 @@ To properly set up and use the Client Assertion Generator in your ASP.NET Core a
 Then you can use `ClientAssertionGeneratorService`, which provides the following methods:
 - `GetClientAssertionAsync`
 - `GetTokenAsync(clientAssertion)`
+
+## Supported Key Formats
+The client assertion generator can load private keys from **PEM** files.  
+The following formats are supported:
+
+| Format Type           | PEM Header / Footer                       | Notes                                                                 |
+|-----------------------|-------------------------------------------|-----------------------------------------------------------------------|
+| **PKCS#1 (RSA)**      | `-----BEGIN RSA PRIVATE KEY-----`<br>`-----END RSA PRIVATE KEY-----` | Legacy RSA private key format.                                        |
+| **PKCS#8 (unencrypted)** | `-----BEGIN PRIVATE KEY-----`<br>`-----END PRIVATE KEY-----`       | Recommended format for new deployments.                               |
+| **PKCS#8 (encrypted)**  | `-----BEGIN ENCRYPTED PRIVATE KEY-----`<br>`-----END ENCRYPTED PRIVATE KEY-----` | Requires the `KeyPassword` property in configuration.                 |
+
+❌ **Not supported**: PFX/P12 containers (`.pfx`, `.p12`).
 
 ## Testing the PDNDClientAssertionGenerator
 This project includes a test application, **PDNDClientAssertionGenerator.Api**, designed to help you test the software with your own configuration. This application acts as a sandbox where you can validate the behavior of the PDNDClientAssertionGenerator components.
