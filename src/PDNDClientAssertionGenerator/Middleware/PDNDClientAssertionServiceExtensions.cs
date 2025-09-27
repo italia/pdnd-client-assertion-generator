@@ -46,6 +46,7 @@ namespace PDNDClientAssertionGenerator.Middleware
                 config.Audience = configuration["ClientAssertionConfig:Audience"];
                 config.PurposeId = configuration["ClientAssertionConfig:PurposeId"];
                 config.KeyPath = configuration["ClientAssertionConfig:KeyPath"];
+                config.KeyPassword = configuration["ClientAssertionConfig:KeyPassword"];
                 config.Duration = int.Parse(configuration["ClientAssertionConfig:Duration"]);
             });
 
