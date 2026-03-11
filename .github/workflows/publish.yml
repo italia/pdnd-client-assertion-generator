@@ -1,8 +1,8 @@
 name: Publish NuGet Package
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
-  
+
 on:
   workflow_dispatch: # Allow running the workflow manually from the GitHub UI
   push:
@@ -12,24 +12,32 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: |
+          9.x
+          8.x
 
     - name: Restore dependencies for PDNDClientAssertionGenerator
       run: dotnet restore src/PDNDClientAssertionGenerator/PDNDClientAssertionGenerator.csproj
-      
+
     - name: Restore dependencies for PDNDClientAssertionGenerator.Tests
       run: dotnet restore src/PDNDClientAssertionGenerator.Tests/PDNDClientAssertionGenerator.Tests.csproj
 
     - name: Build PDNDClientAssertionGenerator
       run: dotnet build src/PDNDClientAssertionGenerator/PDNDClientAssertionGenerator.csproj --no-restore --configuration Release
+
+    - name: Build PDNDClientAssertionGenerator.Tests
+      run: dotnet build src/PDNDClientAssertionGenerator.Tests/PDNDClientAssertionGenerator.Tests.csproj --no-restore --configuration Release
+
+    - name: Run tests
+      run: dotnet test src/PDNDClientAssertionGenerator.Tests/PDNDClientAssertionGenerator.Tests.csproj --no-build --verbosity normal
 
     - name: Ensure output directory exists
       run: mkdir -p ./output
@@ -39,27 +47,19 @@ jobs:
 
     - name: Debug output directory
       run: ls -la ./output
-      
+
     - name: Publish to NuGet
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ./output/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Create GitHub Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
         body: |
           Nuova versione pubblicata: ${{ github.ref_name }}
+        files: ./output/*.nupkg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload NuGet package as release asset
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./output/*.nupkg
-        asset_name: package-${{ github.ref_name }}.nupkg
-        asset_content_type: application/octet-stream
