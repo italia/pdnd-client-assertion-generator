@@ -69,8 +69,71 @@ namespace PDNDClientAssertionGenerator.Tests
                     Content = new StringContent("invalid_json_response"),
                 });
 
-            // Act & Assert: Verify that an exception is thrown on an invalid response
-            var exception = await Assert.ThrowsAsync<HttpRequestException>(() => _oauth2Service.RequestAccessTokenAsync("valid_client_assertion"));
+            // Act & Assert: Verify that an InvalidOperationException is thrown on an invalid JSON response
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _oauth2Service.RequestAccessTokenAsync("valid_client_assertion"));
+            Assert.Contains("Failed to deserialize", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task RequestAccessTokenAsync_ThrowsArgumentException_WhenClientAssertionIsNull()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _oauth2Service.RequestAccessTokenAsync(null!));
+        }
+
+        [Fact]
+        public async Task RequestAccessTokenAsync_ThrowsArgumentException_WhenClientAssertionIsEmpty()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _oauth2Service.RequestAccessTokenAsync(string.Empty));
+        }
+
+        [Fact]
+        public async Task RequestAccessTokenAsync_ThrowsArgumentException_WhenClientAssertionIsWhitespace()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _oauth2Service.RequestAccessTokenAsync("   "));
+        }
+
+        [Fact]
+        public async Task RequestAccessTokenAsync_ThrowsHttpRequestException_OnNonSuccessStatusCode()
+        {
+            // Arrange
+            _handlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Content = new StringContent("Unauthorized"),
+                });
+
+            // Act & Assert
+            await Assert.ThrowsAsync<HttpRequestException>(() => _oauth2Service.RequestAccessTokenAsync("valid_client_assertion"));
+        }
+
+        [Fact]
+        public async Task GenerateClientAssertionAsync_ThrowsOperationCanceledException_WhenCancelled()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(() => _oauth2Service.GenerateClientAssertionAsync(cts.Token));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenConfigIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => new OAuth2Service(null!, _mockHttpClientFactory.Object));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenHttpClientFactoryIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => new OAuth2Service(_mockOptions.Object, null!));
         }
     }
 }
