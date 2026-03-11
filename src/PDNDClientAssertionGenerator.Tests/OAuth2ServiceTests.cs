@@ -6,6 +6,7 @@ using Moq.Protected;
 using PDNDClientAssertionGenerator.Configuration;
 using PDNDClientAssertionGenerator.Services;
 using System.Net;
+using System.Net.Http;
 
 namespace PDNDClientAssertionGenerator.Tests
 {
@@ -14,11 +15,18 @@ namespace PDNDClientAssertionGenerator.Tests
         private readonly OAuth2Service _oauth2Service;
         private readonly Mock<HttpMessageHandler> _handlerMock;
         private readonly Mock<IOptions<ClientAssertionConfig>> _mockOptions;
+        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
 
         public OAuth2ServiceTests()
         {
             // Set up the HttpMessageHandler mock
             _handlerMock = new Mock<HttpMessageHandler>();
+
+            // Set up the HttpClientFactory mock
+            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _mockHttpClientFactory
+                .Setup(f => f.CreateClient(It.IsAny<string>()))
+                .Returns(new HttpClient(_handlerMock.Object));
 
             // Set up the ClientAssertionConfig object
             var clientAssertionConfig = new ClientAssertionConfig
@@ -33,15 +41,15 @@ namespace PDNDClientAssertionGenerator.Tests
                 Audience = "test-audience",
                 PurposeId = "test-purpose-id",
                 KeyPath = "path/to/key",
-                Duration = 60 // token duration in minutes
+                Duration = 60 // token duration in seconds
             };
 
             // Create the mock IOptions<ClientAssertionConfig> instance
             _mockOptions = new Mock<IOptions<ClientAssertionConfig>>();
             _mockOptions.Setup(o => o.Value).Returns(clientAssertionConfig);
 
-            // Initialize OAuth2Service with the mocked IOptions<ClientAssertionConfig>
-            _oauth2Service = new OAuth2Service(_mockOptions.Object);
+            // Initialize OAuth2Service with the mocked dependencies
+            _oauth2Service = new OAuth2Service(_mockOptions.Object, _mockHttpClientFactory.Object);
         }
 
         [Fact]

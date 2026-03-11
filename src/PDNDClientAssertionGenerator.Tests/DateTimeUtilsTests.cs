@@ -11,10 +11,10 @@ namespace PDNDClientAssertionGenerator.Tests
         {
             // Arrange
             DateTime dateTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            int expectedUnixTimestamp = 1704067200;
+            long expectedUnixTimestamp = 1704067200;
 
             // Act
-            int actualUnixTimestamp = dateTime.ToUnixTimestamp();
+            long actualUnixTimestamp = dateTime.ToUnixTimestamp();
 
             // Assert
             Assert.Equal(expectedUnixTimestamp, actualUnixTimestamp);
@@ -26,10 +26,10 @@ namespace PDNDClientAssertionGenerator.Tests
             // Arrange
             DateTime dateTimeLocal = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local);
             DateTime dateTimeUtc = dateTimeLocal.ToUniversalTime();
-            int expectedUnixTimestamp = (int)new DateTimeOffset(dateTimeUtc).ToUnixTimeSeconds();
+            long expectedUnixTimestamp = new DateTimeOffset(dateTimeUtc).ToUnixTimeSeconds();
 
             // Act
-            int actualUnixTimestamp = dateTimeLocal.ToUnixTimestamp();
+            long actualUnixTimestamp = dateTimeLocal.ToUnixTimestamp();
 
             // Assert
             Assert.Equal(expectedUnixTimestamp, actualUnixTimestamp);
@@ -40,10 +40,10 @@ namespace PDNDClientAssertionGenerator.Tests
         {
             // Arrange
             DateTime epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            int expectedUnixTimestamp = 0;
+            long expectedUnixTimestamp = 0;
 
             // Act
-            int actualUnixTimestamp = epochStart.ToUnixTimestamp();
+            long actualUnixTimestamp = epochStart.ToUnixTimestamp();
 
             // Assert
             Assert.Equal(expectedUnixTimestamp, actualUnixTimestamp);

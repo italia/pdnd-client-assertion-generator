@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PDNDClientAssertionGenerator.Configuration;
 using PDNDClientAssertionGenerator.Interfaces;
 using PDNDClientAssertionGenerator.Services;
@@ -15,11 +16,12 @@ namespace PDNDClientAssertionGenerator.Middleware
         /// This method sets up the configuration for `ClientAssertionConfig` and registers necessary services.
         /// </summary>
         /// <param name="services">The IServiceCollection to which the services are added.</param>
+        /// <param name="configuration">Optional IConfiguration instance. If not provided, a default configuration is built from appsettings.json and environment variables.</param>
         /// <returns>The updated IServiceCollection instance.</returns>
-        public static IServiceCollection AddPDNDClientAssertionServices(this IServiceCollection services)
+        public static IServiceCollection AddPDNDClientAssertionServices(this IServiceCollection services, IConfiguration? configuration = null)
         {
-            // Use ConfigurationManager to load the configuration file (appsettings.json or environment variables)
-            var configuration = new ConfigurationManager()
+            // Use the provided configuration or build a default one
+            configuration ??= new ConfigurationManager()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -32,23 +34,14 @@ namespace PDNDClientAssertionGenerator.Middleware
                 throw new InvalidOperationException("Missing 'ClientAssertionConfig' section in appsettings.json.");
             }
 
-            // Register ClientAssertionConfig as a singleton using the IOptions pattern
+            // Register ClientAssertionConfig using the IOptions pattern with Bind
             services.Configure<ClientAssertionConfig>(config =>
             {
-                // Copy values from the configuration file into the ClientAssertionConfig model
-                config.ClientId = configuration["ClientAssertionConfig:ClientId"];
-                config.ServerUrl = configuration["ClientAssertionConfig:ServerUrl"];
-                config.KeyId = configuration["ClientAssertionConfig:KeyId"];
-                config.Algorithm = configuration["ClientAssertionConfig:Algorithm"];
-                config.Type = configuration["ClientAssertionConfig:Type"];
-                config.Issuer = configuration["ClientAssertionConfig:Issuer"];
-                config.Subject = configuration["ClientAssertionConfig:Subject"];
-                config.Audience = configuration["ClientAssertionConfig:Audience"];
-                config.PurposeId = configuration["ClientAssertionConfig:PurposeId"];
-                config.KeyPath = configuration["ClientAssertionConfig:KeyPath"];
-                config.KeyPassword = configuration["ClientAssertionConfig:KeyPassword"];
-                config.Duration = int.Parse(configuration["ClientAssertionConfig:Duration"]);
+                configSection.Bind(config);
             });
+
+            // Register IHttpClientFactory
+            services.AddHttpClient();
 
             // Register OAuth2Service and ClientAssertionGeneratorService as scoped services
             services.AddScoped<IOAuth2Service, OAuth2Service>();

@@ -9,13 +9,13 @@ namespace PDNDClientAssertionGenerator.Utils
         /// </summary>
         /// <param name="dateTime"></param>
         /// <returns></returns>
-        public static int ToUnixTimestamp(this DateTime dateTime)
+        public static long ToUnixTimestamp(this DateTime dateTime)
         {
             // Ensure the DateTime is in UTC to avoid timezone issues
             DateTimeOffset dateTimeOffset = new DateTimeOffset(dateTime.ToUniversalTime());
 
             // Convert to Unix time in seconds
-            int unixTimestamp = (int)dateTimeOffset.ToUnixTimeSeconds();
+            long unixTimestamp = dateTimeOffset.ToUnixTimeSeconds();
 
             return unixTimestamp;
         }

@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Net.Http;
 
 namespace PDNDClientAssertionGenerator.Services
 {
@@ -19,21 +20,24 @@ namespace PDNDClientAssertionGenerator.Services
     public class OAuth2Service : IOAuth2Service
     {
         private readonly ClientAssertionConfig _config;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuth2Service"/> class.
         /// </summary>
         /// <param name="config">An <see cref="IOptions{ClientAssertionConfig}"/> object containing the configuration for client assertion generation.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> is null.</exception>
-        public OAuth2Service(IOptions<ClientAssertionConfig> config)
+        /// <param name="httpClientFactory">An <see cref="IHttpClientFactory"/> used to create <see cref="HttpClient"/> instances.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> or <paramref name="httpClientFactory"/> is null.</exception>
+        public OAuth2Service(IOptions<ClientAssertionConfig> config, IHttpClientFactory httpClientFactory)
         {
-            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
+            _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         /// <inheritdoc />
-        public async Task<string> GenerateClientAssertionAsync(CancellationToken ct = default)
+        public Task<string> GenerateClientAssertionAsync(CancellationToken ct = default)
         {
-            if (ct.IsCancellationRequested) return string.Empty;
+            ct.ThrowIfCancellationRequested();
 
             // Generate a unique token ID (JWT ID)
             Guid tokenId = Guid.NewGuid();
@@ -78,24 +82,25 @@ namespace PDNDClientAssertionGenerator.Services
 
             // Use JwtSecurityTokenHandler to convert the token into a string.
             var tokenHandler = new JwtSecurityTokenHandler();
-            string clientAssertion = string.Empty;
 
             try
             {
-                clientAssertion = tokenHandler.WriteToken(token);
+                var clientAssertion = tokenHandler.WriteToken(token);
+                return Task.FromResult(clientAssertion);
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException("Failed to generate JWT token.", ex);
             }
-
-            return await Task.FromResult(clientAssertion); // Return the generated token as a string.
         }
 
         /// <inheritdoc />
         public async Task<PDNDTokenResponse> RequestAccessTokenAsync(string clientAssertion, CancellationToken ct = default)
         {
-            using var httpClient = new HttpClient();
+            if (string.IsNullOrWhiteSpace(clientAssertion))
+                throw new ArgumentException("Client assertion cannot be null or empty.", nameof(clientAssertion));
+
+            var httpClient = _httpClientFactory.CreateClient();
 
             // Create the payload for the POST request in URL-encoded format.
             var payload = new Dictionary<string, string>

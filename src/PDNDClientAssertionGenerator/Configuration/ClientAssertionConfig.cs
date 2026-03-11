@@ -66,7 +66,7 @@ namespace PDNDClientAssertionGenerator.Configuration
         public string KeyPassword { get; set; }
 
         /// <summary>
-        /// Gets or sets the duration in minutes of the token (this will be used to calculate the token expiration)
+        /// Gets or sets the duration in seconds of the token (this will be used to calculate the token expiration)
         /// </summary>
         public int Duration { get; set; }
     }

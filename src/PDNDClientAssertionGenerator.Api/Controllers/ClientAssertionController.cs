@@ -26,8 +26,13 @@ namespace PDNDClientAssertionGenerator.Api.Controllers
         }
 
         [HttpGet("GetToken", Name = "GetToken")]
-        public async Task<PDNDTokenResponse> GetToken([FromQuery] string clientAssertion)
+        public async Task<ActionResult<PDNDTokenResponse>> GetToken([FromQuery] string clientAssertion)
         {
+            if (string.IsNullOrWhiteSpace(clientAssertion))
+            {
+                return BadRequest("The 'clientAssertion' query parameter is required.");
+            }
+
             return await _clientAssertionGenerator.GetTokenAsync(clientAssertion);
         }
     }
