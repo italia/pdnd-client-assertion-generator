@@ -7,63 +7,63 @@ namespace PDNDClientAssertionGenerator.Configuration
         /// <summary>
         /// Gets or sets the authentication server URL
         /// </summary>
-        public string ServerUrl { get; set; }
+        public string ServerUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the public key ID (kid)
         /// </summary>
-        public string KeyId { get; set; }
+        public string KeyId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the signing algorithm (alg)
         /// </summary>
         /// <remarks>Actually only RS256 is available</remarks>
         /// <example>"RS256"</example>
-        public string Algorithm { get; set; }
+        public string Algorithm { get; set; } = "RS256";
 
         /// <summary>
         /// Gets or sets the type of object
         /// </summary>
         /// <example>"JWT"</example>
-        public string Type { get; set; }
+        public string Type { get; set; } = "JWT";
 
         /// <summary>
         /// Gets or sets the Client identifier
         /// </summary>
-        public string ClientId { get; set; }
+        public string ClientId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the issuer (iss)
         /// </summary>
         /// <remarks>Should be set as the client ID</remarks>
-        public string Issuer { get; set; }
+        public string Issuer { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the subject (sub)
         /// </summary>
         /// <remarks>Should be set as the client ID</remarks>
-        public string Subject { get; set; }
+        public string Subject { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the audience (aud)
         /// </summary>
-        public string Audience { get; set; }
+        public string Audience { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the purpose for which access to resources will be requested (purposeId)
         /// </summary>
-        public string PurposeId { get; set; }
+        public string PurposeId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the path to the private key to sign the client assertion
         /// </summary>
-        public string KeyPath { get; set; }
+        public string KeyPath { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the password for an encrypted PKCS#8 private key.
         /// Leave null or empty if the key is not encrypted.
         /// </summary>
-        public string KeyPassword { get; set; }
+        public string? KeyPassword { get; set; }
 
         /// <summary>
         /// Gets or sets the duration in seconds of the token (this will be used to calculate the token expiration)

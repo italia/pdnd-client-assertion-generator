@@ -67,7 +67,7 @@ namespace PDNDClientAssertionGenerator.Services
             };
 
             // Create signing credentials using RSA for signing the token.
-            using var rsa = SecurityUtils.GetRsaFromKeyPath(_config.KeyPath, _config.KeyPassword.AsSpan());
+            using var rsa = SecurityUtils.GetRsaFromKeyPath(_config.KeyPath, (_config.KeyPassword ?? string.Empty).AsSpan());
             var rsaSecurityKey = new RsaSecurityKey(rsa);
             var signingCredentials = new SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256)
             {
