@@ -10,12 +10,17 @@
 
 A .NET implementation of **OAuth 2.0** client authentication for **PDND** (Piattaforma Digitale Nazionale Dati), including client assertion (JWT) generation and voucher retrieval.
 
+Supports **.NET 8** (LTS) and **.NET 9** via multi-targeting.
+
 ## Contents
 - [What is PDND?](#what-is-pdnd)
 - [Voucher](#voucher)
 - [Requesting a Voucher](#requesting-a-voucher)
-- [How to Use the Client Assertion Generator](#how-to-use-the-client-assertion-generator)
 - [Voucher Flow for Interoperability APIs](#voucher-flow-for-interoperability-apis)
+- [How to Use the Client Assertion Generator](#how-to-use-the-client-assertion-generator)
+- [Supported Key Formats](#supported-key-formats)
+- [Testing the PDNDClientAssertionGenerator](#testing-the-pdndclientassertiongenerator)
+- [How to Contribute](#how-to-contribute)
 - [Security Notes](#security-notes)
 - [License](#license)
 - [Contact](#contact)
@@ -41,13 +46,13 @@ To obtain a valid voucher, you must first upload at least one public key to an i
 
 ## Voucher Flow for Interoperability APIs
 1. Your system requests a voucher using a signed client assertion.
-2. On success, include the returned voucher in the Authorization: Bearer <token> header when calling PDND Interoperability APIs.
+2. On success, include the returned voucher in the `Authorization: Bearer <token>` header when calling PDND Interoperability APIs.
 
 ## How to Use the Client Assertion Generator
 To properly set up and use the Client Assertion Generator in your ASP.NET Core application, follow these steps:
 
-1. Configure Client Assertion Settings, an example below:
-  ```xml
+1. Configure Client Assertion Settings in `appsettings.json`:
+  ```json
   "ClientAssertionConfig": {
     "ServerUrl": "https://test-server-url.com",
     "KeyId": "ZmYxZGE2YjQtMzY2Yy00NWI5LThjNGItMDJmYmQyZGIyMmZh",
@@ -59,19 +64,29 @@ To properly set up and use the Client Assertion Generator in your ASP.NET Core a
     "Audience": "https://erogatore.example/ente-example/v1",
     "PurposeId": "1b361d49-33f4-4f1e-a88b-4e12661f2300",
     "KeyPath": "C:/Keys/private.pem",
-    "KeyPassword": "", // Only for encrypted PKCS#8 PEM
-    "Duration": "600" // Duration is expressed in seconds
-  },
+    "KeyPassword": "",
+    "Duration": 600
+  }
   ```
+
+  > **Note:**
+  > - `Algorithm` (default `"RS256"`) and `Type` (default `"JWT"`) can be omitted; they will use their defaults.
+  > - `KeyPassword` is only required for encrypted PKCS#8 PEM keys. It can be omitted entirely if the key is not encrypted.
+  > - `Duration` is expressed in seconds and must be greater than zero.
 
 2. Register Services:
   ```csharp
   builder.Services.AddPDNDClientAssertionServices();
   ```
 
-Then you can use `ClientAssertionGeneratorService`, which provides the following methods:
-- `GetClientAssertionAsync`
-- `GetTokenAsync(clientAssertion)`
+  You can also pass an explicit `IConfiguration` instance:
+  ```csharp
+  builder.Services.AddPDNDClientAssertionServices(builder.Configuration);
+  ```
+
+3. Inject `IClientAssertionGenerator` and use the following methods:
+  - `GetClientAssertionAsync(CancellationToken)` — generates a signed client assertion (JWT).
+  - `GetTokenAsync(clientAssertion, CancellationToken)` — exchanges the assertion for a voucher (access token).
 
 ## Supported Key Formats
 The client assertion generator can load private keys from **PEM** files.  
