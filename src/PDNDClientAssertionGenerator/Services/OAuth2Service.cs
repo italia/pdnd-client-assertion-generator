@@ -115,10 +115,10 @@ namespace PDNDClientAssertionGenerator.Services
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             // Create the content for the POST request (FormUrlEncodedContent).
-            var content = new FormUrlEncodedContent(payload);
+            using var content = new FormUrlEncodedContent(payload);
 
             // Send the POST request to the OAuth2 server and await the response.
-            HttpResponseMessage response = await httpClient
+            using HttpResponseMessage response = await httpClient
                 .PostAsync(_config.ServerUrl, content, ct)
                 .ConfigureAwait(false);
 
