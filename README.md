@@ -20,6 +20,7 @@ Supports **.NET 8** (LTS) and **.NET 9** via multi-targeting.
 - [How to Use the Client Assertion Generator](#how-to-use-the-client-assertion-generator)
 - [Supported Key Formats](#supported-key-formats)
 - [Testing the PDNDClientAssertionGenerator](#testing-the-pdndclientassertiongenerator)
+- [Author and maintainer](#author-and-maintainer)
 - [How to Contribute](#how-to-contribute)
 - [Security Notes](#security-notes)
 - [License](#license)
@@ -113,6 +114,12 @@ This project includes a test application, **PDNDClientAssertionGenerator.Api**, 
       `dotnet run --project src/PDNDClientAssertionGenerator.Api/PDNDClientAssertionGenerator.Api.csproj`
   
 3. Testing Scenarios: Once the application is running, you can use various `GetClientAssertion` and `GetToken` to test the functionality of the software in different configurations.
+
+## Author and maintainer
+| [![Francesco Del Re](https://github.com/engineering87.png?size=100)](https://github.com/engineering87) |
+| ------------------------------------------------------------------------------------------------------ |
+| **Francesco Del Re** |
+| Author & Maintainer |
 
 ## How to Contribute
 Thank you for considering to help out with the source code!
